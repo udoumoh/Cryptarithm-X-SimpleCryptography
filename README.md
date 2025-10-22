@@ -1,5 +1,3 @@
----
-
 # Problem 1 — Cryptarithm Solver Using Constraint Programming with Z3
 
 ### How to Run / Test
@@ -14,20 +12,6 @@ All three files for this solution are in the `cryptarithm/` folder and are execu
 
 No command-line arguments are needed.
 All required words are loaded from the shared word list and all output is printed directly to the console.
-
----
-
-### Claimed Grade and Justification (≥ 80%)
-
-I believe this work belongs in the ≥80% band because it goes beyond producing a single solver script. The solution is delivered as three coordinated modules:
-
-1. A **random instance solver** that dynamically samples English words and attempts a fresh puzzle on each run.
-2. An **edge-case testing module** that demonstrates constraint correctness on classical solvable, deliberately unsatisfiable, and adversarial inputs.
-3. An **all-solutions module** that demonstrates model blocking and returns the full solution count for a given puzzle.
-
-This structure covers **creative additions**, **systematic testing beyond typical cases**, and **demonstrates awareness of completeness vs satisfiability**. I also provide explicit semantic verification of solver outputs, and a reflective comparison to non-constraint approaches. These coverage points align with the ≥80% rubric for: development process, testing depth, and paradigm reflection.
-
----
 
 ## 1. Introduction
 
@@ -142,4 +126,3 @@ Possible future work includes extension to subtraction/multiplication puzzles, G
 
 AI assistance (ChatGPT) was used only for clarification of Z3 syntax, debugging questions, and structuring of explanatory text. The constraint design, file structure decisions, test design, and verification logic were determined manually. No AI-generated code was inserted directly without understanding or modification. All code present was reviewed and validated by me before inclusion.
 
----
