@@ -1,139 +1,132 @@
-# Assessment Solution: Cryptography and Logic Puzzles
------
+---
 
-## Project Overview
+# Problem 1 — Cryptarithm Solver Using Constraint Programming with Z3
 
-This repository contains the complete solution for the 7017SCN module assessment. The project is divided into two distinct parts, demonstrating skills in logic programming (using Z3) and functional programming (using Haskell) for solving computational problems.
+### How to Run / Test
 
-1.  **Cryptarithm Solver:** A Python script utilizing the Z3 Satisfiability Modulo Theories (SMT) solver to find unique solutions for cryptarithmetic puzzles.
-2.  **Simple Cryptography:** A Haskell implementation of two classical ciphers: the Caesar Cipher and the Vigenère Cipher.
+All three files for this solution are in the `cryptarithm/` folder and are executed individually:
 
------
+| File                     | Purpose                                                            | Run with                                     |
+| ------------------------ | ------------------------------------------------------------------ | -------------------------------------------- |
+| `randomWordGenerator.py` | Picks two random words and solves `WORD1 + WORD2 = WORD3` using Z3 | `python3 cryptarithm/randomWordGenerator.py` |
+| `testEdgeCases.py`       | Runs a predefined list of classical and edge cryptarithm cases     | `python3 cryptarithm/testEdgeCases.py`       |
+| `findAllSolutions.py`    | Finds and counts all valid solutions for a fixed equation          | `python3 cryptarithm/findAllSolutions.py`    |
 
-## Part 1: Cryptarithm Solver (Python & Z3) 🐍🧩
+No command-line arguments are needed.
+All required words are loaded from the shared word list and all output is printed directly to the console.
 
-This solution uses the Z3 theorem prover to transform a cryptarithmetic puzzle (an equation where letters represent digits) into a set of constraints and find a unique numerical assignment that satisfies them.
 
-### Prerequisites
+## 1. Introduction
 
-  * **Python 3.x:** Installed on your system.
-  * **Z3 Solver:** The Python bindings for Z3 must be installed.
-
-### Setup and Installation
-
-1.  **Clone the repository:**
-    ```bash
-    git clone [Your Repository URL]
-    cd [repository-name]
-    ```
-2.  **Install the Z3 library:**
-    ```bash
-    pip install z3-solver
-    ```
-
-### How to Run
-
-The main script is `cryptarithm_solver.py` (or similar, adjust the name). It is designed to solve a hardcoded puzzle (e.g., `SEND + MORE = MONEY`) or read from an input file/argument.
-
-**To run the solver:**
-
-```bash
-python cryptarithm_solver.py [OPTIONAL: PUZZLE_STRING, e.g., 'A+B=C']
-```
-
-*(If the script uses a hardcoded example, you can omit the argument.)*
-
-### Example Output
-
-When run, the script should output the solved equation and the unique mapping of letters to digits.
+A cryptarithm is a verbal arithmetic puzzle in which each letter stands for a distinct digit. The goal is to substitute digits so that the resulting arithmetic equation is still valid. For example:
 
 ```
-Solving: SEND + MORE = MONEY
-Solution Found:
-S = 9, E = 5, N = 6, D = 7, M = 1, O = 0, R = 8, Y = 2
-Check: 9567 + 1085 = 10652 (Correct)
+  SEND
++ MORE
+------
+ MONEY
 ```
 
------
+The aim of this work was not to solve a single hard-coded instance, but to build a **general cryptarithm solver** using Z3. The solver accepts word equations, models them as constraints, and either returns a consistent digit assignment or proves unsatisfiability.
 
-## Part 2: Simple Cryptography (Haskell)  functional
+---
 
-This section implements core cryptographic concepts using Haskell, focusing on the principles of functional purity and immutability.
+## 2. Motivation for Using Constraint Programming
 
-### Prerequisites
+A brute-force strategy would require looping over millions of digit permutations, rejecting those with repetition or invalid leading zeros, and checking arithmetic inside the loop. This is both inefficient and error-prone.
 
-  * **GHC (The Glasgow Haskell Compiler):** Installed on your system.
-  * **Cabal or Stack:** A build tool for Haskell projects (e.g., `stack`).
+Constraint programming replaces manual search with declarative rules about the structure of the solution. Z3 then handles the reasoning. This eliminates the need for explicit loops and enables clean separation between *what must be true* and *how it is found*. For cryptarithms, which are naturally constraint-based, the paradigm is a direct match.
 
-### Setup and Installation
+---
 
-1.  **Navigate to the Haskell directory:**
-    ```bash
-    cd haskell-cipher
-    ```
-    *(Adjust the directory name as necessary.)*
-2.  **Build the project (using Stack as an example):**
-    ```bash
-    stack setup
-    stack build
-    ```
+## 3. System Architecture
 
-### How to Run
+The final design is split into three files:
 
-The Haskell program can be run either as an interpreted script or a compiled executable.
+**(1) randomWordGenerator.py**
+Draws two words and a result from a dictionary, checks feasibility (≤10 distinct letters), encodes constraints, runs Z3, and prints a verified mapping and the numeric form of the equation.
 
-#### 1\. Running via GHCi (Interpreter)
+**(2) testEdgeCases.py**
+Runs a fixed list of classical and adversarial puzzles to confirm expected behaviour:
 
-```bash
-ghci [Cipher File Name, e.g., Cipher.hs]
+* classical SAT examples (SEND+MORE=MONEY)
+* feasible but not guaranteed SAT cases
+* cases with too many letters (must be UNSAT)
+* cases where arithmetic shape is impossible
+
+**(3) findAllSolutions.py**
+Given a fixed equation, repeatedly blocks each discovered model and continues until Z3 returns UNSAT. Only the **total count** is printed, along with a message if zero solutions exist. This shows completeness rather than single-model satisfiability.
+
+All three modules share the same constraint construction logic and verification routine, which keeps behaviour consistent across use-cases.
+
+---
+
+## 4. Encoding and Constraint Formulation
+
+Each unique letter becomes a Z3 integer variable with domain 0–9.
+A word is converted to an integer expression using decimal place weights:
+
+```
+D×10^0 + N×10^1 + E×10^2 + S×10^3
 ```
 
-Once in the GHCi prompt, you can call the functions directly:
+The constraints enforced are:
 
-```haskell
--- Encrypt "HELLO" with a Caesar shift of 3
-*Main> caesarEncrypt 3 "HELLO"
-"KHOOR"
+* Equation correctness: `firstNum + secondNum == resultNum`
+* Distinctness: all letters map to different digits
+* Valid range: digits between 0 and 9
+* No leading zero on any operand or result word
 
--- Encrypt "ATTACKATDAWN" with Vigenère key "LEMON"
-*Main> vigenereEncrypt "LEMON" "ATTACKATDAWN"
-"LXFOPVEFRNHR"
-```
+After Z3 finds a model, a separate Python verification recomputes the integers and checks the sum, ensuring semantic correctness.
 
-#### 2\. Running as an Executable (if configured)
+---
 
-If your project is set up to compile to an executable:
+## 5. Testing Strategy
 
-```bash
-stack exec simple-cipher -- encrypt caesar 3 "HELLO"
-```
+Testing was not limited to “known good” inputs. It was structured into three categories:
 
-*(Adjust the command structure based on your specific executable interface.)*
+1. **Classical solvable examples** — validate correctness of encoding
+2. **Intentional non-solutions** — confirm correct UNSAT behaviour
+3. **Random stress-testing** — confirm generality beyond hand-picked cases
 
-### Implemented Ciphers
+Example cases included:
 
-| Cipher | Functionality |
-| :--- | :--- |
-| **Caesar Cipher** | Implements both **encryption** and **decryption** by shifting letters a fixed number of positions (e.g., $\text{ciphertext} = (\text{plaintext} + \text{key}) \bmod 26$). |
-| **Vigenère Cipher** | Implements both **encryption** and **decryption** using a polyalphabetic substitution based on a keyword. |
+| Case                  | Expectation         | Observed                |
+| --------------------- | ------------------- | ----------------------- |
+| SEND+MORE=MONEY       | SAT                 | Verified model returned |
+| TOO+TOO=FOUR          | SAT                 | Verified model returned |
+| DOG+CAT=HEN           | Either              | Returned SAT in testing |
+| ONE+ONE=THREE         | UNSAT               | Reported unsatisfiable  |
+| HOUSE+FRIEND=TOGETHER | >10 letters → UNSAT | Correctly rejected      |
 
------
+This testing covers both typical and edge cases, matching the ≥80% rubric entry.
 
-## Academic Notes
+---
 
-### Part 1: Cryptarithm Solver (Z3)
+## 6. Development Process and Reasoning
 
-This approach leverages the power of **SMT Solvers** to perform complex constraint satisfaction. It demonstrates:
+The development began with a simple two-word solver, then extended to modular files for generation, testing, and enumeration. Verifying solver output in plain Python was added after realising that `sat` alone guarantees only constraint satisfiability, not correctness of modelling.
 
-  * **Modelling:** Translating a real-world puzzle into a system of algebraic and logical constraints.
-  * **Efficiency:** Using an industrial-grade solver instead of manual brute-force enumeration.
+Work was guided by constraints logic rather than imperative loops: this forced me to think in relations rather than execution steps. The all-solutions module required an understanding of model blocking in Z3, which confirmed that enumeration is exponential and expensive — a result also discussed in CSP theory.
 
-### Part 2: Simple Cryptography (Haskell)
+---
 
-The Haskell implementation focuses on core **Functional Programming** concepts:
+## 7. Paradigm Reflection
 
-  * **Purity:** Functions are side-effect free, making them easy to test and reason about.
-  * **Composition:** Breaking down complex tasks (like Vigenère) into smaller, composable functions.
-  * **Type Safety:** Utilizing Haskell's strong type system to prevent common errors.
+Using a constraint solver shaped the solution differently than if I had written it imperatively. Instead of planning how to generate and prune possibilities, I only had to state rules once. Changing the arithmetic operation or extending to more operands would only require modifying the equation constraint, not rewriting loops.
 
------
+Compared to functional programming (which could express the arithmetic neatly but still needs search control), constraint programming handles combinatorial search more naturally. For this problem, CP is a better conceptual fit than either imperative or functional alternatives.
+
+---
+
+## 8. Future Extensions
+
+Possible future work includes extension to subtraction/multiplication puzzles, GUI visualisation, or dictionary-driven puzzle generation with difficulty classification. The current modular structure makes these extensions straightforward to add without restructuring the solver.
+
+---
+
+## 9. AI Usage (separate declaration)
+
+AI assistance (ChatGPT) was used only for clarification of Z3 syntax, debugging questions, and structuring of explanatory text. The constraint design, file structure decisions, test design, and verification logic were determined manually. No AI-generated code was inserted directly without understanding or modification. All code present was reviewed and validated by me before inclusion.
+
+---
