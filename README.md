@@ -1,5 +1,3 @@
----
-
 # Problem 1 — Cryptarithm Solver Using Constraint Programming with Z3
 
 ### How to Run / Test
@@ -14,7 +12,6 @@ All three files for this solution are in the `cryptarithm/` folder and are execu
 
 No command-line arguments are needed.
 All required words are loaded from the shared word list and all output is printed directly to the console.
-
 
 ## 1. Introduction
 
@@ -129,4 +126,3 @@ Possible future work includes extension to subtraction/multiplication puzzles, G
 
 AI assistance (ChatGPT) was used only for clarification of Z3 syntax, debugging questions, and structuring of explanatory text. The constraint design, file structure decisions, test design, and verification logic were determined manually. No AI-generated code was inserted directly without understanding or modification. All code present was reviewed and validated by me before inclusion.
 
----
